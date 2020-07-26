@@ -1,0 +1,66 @@
+<div class="min-h-screen blueprint-pattern">
+  <div class="max-w-screen-sm mx-auto pt-4">
+    <%= link to: Routes.marketing_page_path(@conn, :index), class: "flex items-center space-x-1 text-gray-700 hover:underline hover:text-gray-900" do %>
+      <svg class="w-4" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+      <span><%= gettext("Back") %></span>
+    <% end %>
+
+    <div class="mt-2 bg-white p-4 rounded shadow">
+      <div class="prose">
+        <h1>About Todayflex</h1>
+
+        <p>Most apps are built around projects or tasks. Those are things that
+        people can jump in and out.</p>
+
+        <p>Todayflex is about you, the person doing the work - and in that sense
+        we're closer to a journal than a project management software.</p>
+
+        <p>Todayflex is organized in days, each day at a time. "Today" is the
+        most important day, it's when things are happening: you're writing about
+        things you need to remember, you're creating tasks about stuff you'll do
+        later, you're pasting screenshots to capture the progress.</p>
+
+        <p>When the work period is ending, we usually start to slow down and think
+        about the next day: what we couldn't finish that we'll do tomorrow, ideas
+        that are worth keeping, ideas that are not so interesting and should be
+        archived.</p>
+
+        <h2>About the business</h2>
+
+        <p>I have no idea how to run a business, I just wanted to create something.</p>
+
+        <p>Todayflex is open-source, so if anything happens to me you can always host it yourself. But it's
+        a lot of work to do it right, and there's how I'll (hopefully) make money to support this project.</p>
+
+        <p>When you purchase Todayflex you're essentially paying for:</p>
+
+        <ul>
+          <li>Hosting (servers, backup, security and automatic updates).</li>
+          <li>Support further improvements, new features and bug fixes.</li>
+        </ul>
+
+        <blockquote>
+          <p>I've seen so many apps fail or just go offline - what if this happens to Todayflex?</p>
+        </blockquote>
+
+        <p>Todayflex is open-source, so you can always host it yourself. You can also export your data
+        and import into any running instance which makes Todayflex <b>reaaally</b> flexible.</p>
+
+        <p>Hopefully that eases your mind 😁.</p>
+
+        <h2 class="text-3xl font-bold">About the tech</h2>
+
+        <p>Here are the main technologies used to build this software:</p>
+
+        <ul>
+          <li>Digital Ocean Droplets for hosting.</li>
+          <li>Digital Ocean Spaces for file storage.</li>
+          <li>Postgres for storing pretty much everything expect files.</li>
+          <li>Phoenix for the backend.</li>
+          <li>Elm for the editor. This is the only piece I couldn't see myself using anything else.</li>
+          <li>AlpineJS for simple interactive elements in this website</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,34 @@
+<div class="min-h-screen blueprint-pattern">
+  <div class="max-w-screen-sm mx-auto pt-4">
+    <%= link to: Routes.marketing_page_path(@conn, :index), class: "flex items-center space-x-1 text-gray-700 hover:underline hover:text-gray-900" do %>
+      <svg class="w-4" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+      <span><%= gettext("Back") %></span>
+    <% end %>
+
+    <div class="mt-2 bg-white p-4 rounded shadow">
+      <div class="prose">
+        <h1>Privacy Policy</h1>
+
+        <blockquote>
+          Hi there, I'm Luiz, the developer who created this app.<br />
+          I've written this privacy policy by hand
+        </blockquote>
+
+        <ul>
+          <li>
+            In the marketing website, we don't track any cookies in any way that identifies you or your device.
+            We do store request logs that have your IP address in our servers.
+          </li>
+          <li>
+            Files are stored in Digital Ocean Spaces using the default encryption with no public access.
+          </li>
+          <li>
+            Your personal information, such as name and email, is stored in your database which is also hosted
+            in Digital Ocean. The database is not encrypted on disk, but it's password protected and accepts
+            connections only from local network (no internet connections).
+          </li>
+        </ul>
+      </div><!-- prose -->
+    </div><!-- bg-white -->
+  </div><!-- max-width -->
+</div><!-- blueprint -->

@@ -1,0 +1,2 @@
+<div id="editor" data-project-id="<%= @project.id %>">
+</div>

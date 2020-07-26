@@ -1,0 +1,158 @@
+<div class="w-screen h-screen flex items-center justify-center blueprint-pattern">
+  <div class="-mt-12 flex flex-col items-center space-y-6">
+    <div style="width: 350px;">
+      <img src="<%= Routes.static_path(@conn, "/images/logo.svg")  %>" class="w-full" />
+    </div>
+
+    <div class="relative"
+         style="max-width: 650px;"
+         x-data="{
+           hovering: null,
+           clicked: null,
+           isActive: function (block) {
+             if (this.clicked != null) {
+               return this.clicked == block;
+             }
+
+             return this.hovering == block;
+           }
+         }"
+         x-init="
+           () => {
+             window.addEventListener('load', () => {
+               $refs.descriptions.style.marginBottom = $refs.sentence.getBoundingClientRect().height + 'px';
+             });
+           }
+         "
+         @click.away="clicked = null"
+    >
+      <div x-ref="sentence" class="bg-white p-4 text-center text-lg">
+        How can I get
+
+        <span @mouseenter="hovering = 'activities'"
+              @mouseleave="hovering = null"
+              @click="clicked = 'activities'"
+              class="cursor-pointer inline-block border-b-2 border-blue-400 border-dashed leading-none hover:bg-blue-200"
+              x-bind:class="{'bg-blue-200': isActive('activities')}"
+        >
+          things done
+        </span>
+
+        in an
+
+        <span @mouseenter="hovering = 'organization'"
+              @mouseleave="hovering = null"
+              @click="clicked = 'organization'"
+              class="cursor-pointer inline-block border-b-2 border-blue-400 border-dashed leading-none hover:bg-blue-200"
+              x-bind:class="{'bg-blue-200': isActive('organization')}"
+        >
+          organized way
+        </span>
+
+        so that I can have
+        
+        <span @mouseenter="hovering = 'confidence'"
+              @mouseleave="hovering = null"
+              @click="clicked = 'confidence'"
+              class="cursor-pointer inline-block border-b-2 border-blue-400 border-dashed leading-none hover:bg-blue-200"
+              x-bind:class="{'bg-blue-200': isActive('confidence')}"
+        >
+          confidence
+        </span>
+
+        I'll finish it
+
+        <span @mouseenter="hovering = 'due_date'"
+              @mouseleave="hovering = null"
+              @click="clicked = 'due_date'"
+              class="cursor-pointer inline-block border-b-2 border-blue-400 border-dashed leading-none hover:bg-blue-200"
+              x-bind:class="{'bg-blue-200': isActive('due_date')}"
+        >
+          in time
+        </span>
+
+        and
+
+        <span @mouseenter="hovering = 'correct_way'"
+              @mouseleave="hovering = null"
+              @click="clicked = 'correct_way'"
+              class="cursor-pointer inline-block border-b-2 border-blue-400 border-dashed leading-none hover:bg-blue-200"
+              x-bind:class="{'bg-blue-200': isActive('correct_way')}"
+        >
+          correctly
+        </span>?
+      </div>
+
+      <div x-ref="descriptions"
+           class="absolute bottom-0 left-0"
+      >
+        <div x-show="isActive('activities')"
+             class="bg-white p-2 shadow-lg"
+        >
+          Cada projeto é especial, um esforço único para criar algo novo.
+
+          As atividades devem <b>capturar</b> e <b>descrever</b> o que está sendo feito no projeto para que
+          seus colegas de trabalho ou você mesmo no futuro possa entender o que foi feito.
+
+          Nós temos várias ferramentas: lista de tarefas, documentos de texto,
+          imagens, anexos, quadro de kanban, calendário e outros.
+
+          <div class="italic">Ah, você não precisa usar tudo isso, apenas o que fizer sentido para o projeto.</div>
+        </div>
+
+        <div x-show="isActive('organization')" class="bg-white p-2 shadow-lg">
+          Ninguém busca mudança sem sentir dor antes. E se você está lendo esse texto exista um chance de você
+          ter passado por situações caóticas que sairam do controle - desorganização.
+
+          Eu posso te adiantar que não existe fórmula nem resposta certa, e não existe software no mundo que
+          resolva esse problema. Processos resolvem esse problema. Métodos e práticas resolvem esse problema.
+          Disciplina resolve esse problema.
+
+          Nossa abordagem para a organização é deixar o <b>caminho livre</b> para que o projeto reflita
+          o seu nível de exigências em relação à organização.
+        </div>
+
+        <div x-show="isActive('confidence')" class="bg-white p-2 shadow-lg">
+          Ahh, o lado subjetivo da coisa.
+        </div>
+
+        <div x-show="isActive('correct_way')" class="bg-white p-2 shadow-lg">
+          The correct way.
+        </div>
+
+        <div x-show="isActive('due_date')" class="bg-white p-2 shadow-lg">
+          Due date.
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center space-x-2">
+      <a href="" class="bg-indigo-600 text-indigo-100 font-bold py-1 px-4 border-b-2 border-indigo-900">
+        <%= gettext "Login" %>
+      </a>
+
+      <a href="" class="bg-purple-600 text-purple-100 font-bold py-1 px-4 border-b-2 border-purple-900">
+        <%= gettext "Register" %>
+      </a>
+
+      <span><%= gettext "or" %></span>
+
+      <a href="#" class="bg-green-600 text-green-100 font-bold py-1 px-4 border-b-2 border-green-900 rounded-full flex items-center space-x-1">
+        <svg class="w-5" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
+        <span><%= gettext "See it for yourself" %></span>
+      </a>
+    </div>
+
+    <div class="flex items-center text-sm space-x-1 text-gray-800">
+      <div class="flex items-scenter space-x-1">
+        <%= link gettext("About"), to: Routes.marketing_page_path(@conn, :about), class: "hover:underline" %>
+        <span>&middot;</span>
+        <%= link gettext("Privacy Policy"), to: Routes.marketing_page_path(@conn, :privacy_policy), class: "hover:underline" %>
+      </div>
+
+      <div>
+        &mdash; made with ♥  by <a href="https://twitter.com/luizpvasc" class="text-blue-600 hover:underline">Luiz Paulo</a>
+      </div>
+    </div>
+  </div>
+</div>
