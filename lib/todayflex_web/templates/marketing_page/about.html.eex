@@ -60,7 +60,7 @@
           <li>Elm for the editor. This is the only piece I couldn't see myself using anything else.</li>
           <li>AlpineJS for simple interactive elements in this website</li>
         </ul>
-      </div>
-    </div>
-  </div>
-</div>
+      </div><!-- prose -->
+    </div><!-- bg-white -->
+  </div><!-- max-w-screen-sm -->
+</div><!-- blueprint-pattern -->
