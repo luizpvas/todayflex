@@ -2,7 +2,9 @@ module Point exposing (Point, minus, scale)
 
 
 type alias Point =
-    { x : Float, y : Float }
+    { x : Float
+    , y : Float
+    }
 
 
 minus : Point -> Point -> Point

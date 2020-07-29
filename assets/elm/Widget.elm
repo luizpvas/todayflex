@@ -1,4 +1,4 @@
-module Widget exposing (Widget, WidgetId, WidgetRender(..), pushPointToDrawing, view)
+module Widget exposing (Widget, WidgetId, WidgetRender(..), pushWorldPointToDrawing, view)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -24,8 +24,8 @@ type WidgetRender
     = Drawing (List Point)
 
 
-pushPointToDrawing : Point -> Widget -> Widget
-pushPointToDrawing { x, y } widget =
+pushWorldPointToDrawing : Point -> Widget -> Widget
+pushWorldPointToDrawing { x, y } widget =
     case widget.render of
         Drawing points ->
             { widget
@@ -39,8 +39,18 @@ pushPointToDrawing { x, y } widget =
             }
 
 
-view : Widget -> Html msg
-view widget =
+type alias Config =
+    { widget : Widget
+    , isSelected : Bool
+    }
+
+
+view : Config -> Html msg
+view config =
+    let
+        widget =
+            config.widget
+    in
     case widget.render of
         Drawing points ->
             let
@@ -53,6 +63,13 @@ view widget =
                 polylinePoints =
                     List.map (\point -> String.fromFloat (point.x - widget.rect.x1) ++ "," ++ String.fromFloat (point.y - widget.rect.y1)) points
                         |> String.join " "
+
+                strokeColor =
+                    if config.isSelected then
+                        "blue"
+
+                    else
+                        "black"
             in
             Svg.svg
                 [ Svg.Attributes.width (String.fromFloat width ++ "px")
@@ -62,7 +79,7 @@ view widget =
                 ]
                 [ Svg.polyline
                     [ Svg.Attributes.fill "none"
-                    , Svg.Attributes.stroke "black"
+                    , Svg.Attributes.stroke strokeColor
                     , Svg.Attributes.points polylinePoints
                     ]
                     []

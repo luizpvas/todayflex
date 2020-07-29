@@ -1,7 +1,17 @@
-module Editor exposing (Editor, addNewDrawingWidget, update, updateWidget)
+module Editor exposing
+    ( Editor
+    , addNewDrawingWidget
+    , clearSelection
+    , init
+    , screenToWorld
+    , update
+    , updateSelection
+    , updateWidget
+    )
 
 import Point exposing (Point)
 import Rect exposing (Rect)
+import Selection exposing (Selection)
 import Widget exposing (Widget, WidgetId)
 
 
@@ -9,7 +19,23 @@ type alias Editor =
     { panOffset : Point
     , zoomFactor : Float
     , widgets : List Widget
+    , selection : Selection
     }
+
+
+init : Editor
+init =
+    { panOffset = { x = 0, y = 0 }
+    , zoomFactor = 1.0
+    , widgets = []
+    , selection = Selection.init
+    }
+
+
+screenToWorld : Editor -> Point -> Point
+screenToWorld editor point =
+    Point.minus editor.panOffset point
+        |> Point.scale (1 / editor.zoomFactor)
 
 
 update : (Editor -> Editor) -> Editor -> Editor
@@ -17,25 +43,27 @@ update fn editor =
     fn editor
 
 
-detectSelectionIntersectionWithWidgets : Rect -> Editor -> List Widget
-detectSelectionIntersectionWithWidgets selection editor =
-    let
-        intersects =
-            \widget ->
-                (max selection.x1 widget.rect.x1 < min selection.x2 widget.rect.x2)
-                    && (max selection.y1 widget.rect.y1 < min selection.y2 widget.rect.y2)
-    in
-    List.filter intersects editor.widgets
+clearSelection : Editor -> Editor
+clearSelection editor =
+    { editor | selection = Selection.init }
+
+
+updateSelection : Rect -> Editor -> Editor
+updateSelection selectionRect editor =
+    { editor | selection = Selection.calculateSelection selectionRect editor.widgets }
 
 
 addNewDrawingWidget : Int -> Point -> Editor -> ( Editor, Int )
-addNewDrawingWidget latestId { x, y } editor =
+addNewDrawingWidget latestId screenPoint editor =
     let
+        worldPoint =
+            screenToWorld editor screenPoint
+
         updatedWidgets =
             editor.widgets
                 ++ [ { id = latestId
-                     , rect = { x1 = x, y1 = y, x2 = x, y2 = y }
-                     , render = Widget.Drawing [ { x = x, y = y } ]
+                     , rect = { x1 = worldPoint.x, y1 = worldPoint.y, x2 = worldPoint.x, y2 = worldPoint.y }
+                     , render = Widget.Drawing [ worldPoint ]
                      }
                    ]
     in

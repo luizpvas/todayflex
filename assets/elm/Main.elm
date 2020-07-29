@@ -2,7 +2,6 @@ module Main exposing (main)
 
 import Browser
 import Browser.Dom
-import Browser.Events
 import Editor exposing (Editor)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -12,6 +11,8 @@ import Json.Decode as Decode exposing (Decoder)
 import Lang
 import Point exposing (Point)
 import Ports
+import Rect exposing (Rect)
+import Selection
 import Task
 import Tool exposing (Tool)
 import Widget exposing (Widget, WidgetId)
@@ -43,7 +44,7 @@ maxZoomFactor =
 type Mode
     = Hovering
     | Panning
-    | Selecting Point Point
+    | Selecting Rect
     | Drawing WidgetId
 
 
@@ -65,7 +66,7 @@ init : Flags -> ( Model, Cmd Msg )
 init flags =
     ( { latestId = flags.latestId
       , mode = Hovering
-      , editor = { panOffset = { x = 0, y = 0 }, zoomFactor = 1.0, widgets = [] }
+      , editor = Editor.init
       , screen = { x = 0, y = 0 }
       , selectedTool = Tool.Move
       }
@@ -130,19 +131,39 @@ update msg model =
         StopPanning ->
             ( { model | mode = Hovering }, Cmd.none )
 
-        StartSelecting x y ->
-            ( { model | mode = Selecting { x = x, y = y } { x = x, y = y } }, Cmd.none )
+        StartSelecting screenX screenY ->
+            let
+                worldPoint =
+                    Editor.screenToWorld model.editor { x = screenX, y = screenY }
+            in
+            ( { model | mode = Selecting { x1 = worldPoint.x, y1 = worldPoint.y, x2 = worldPoint.x, y2 = worldPoint.y } }
+                |> updateEditor Editor.clearSelection
+            , Cmd.none
+            )
 
-        SelectionMove x y ->
+        SelectionMove screenX screenY ->
             case model.mode of
-                Selecting startPoint _ ->
-                    ( { model | mode = Selecting startPoint { x = x, y = y } }, Cmd.none )
+                Selecting rect ->
+                    let
+                        worldPoint =
+                            Editor.screenToWorld model.editor { x = screenX, y = screenY }
+
+                        updatedRect =
+                            { rect | x2 = worldPoint.x, y2 = worldPoint.y }
+                                |> Rect.normalizeTopLeft
+                    in
+                    ( { model | mode = Selecting updatedRect }
+                        |> updateEditor (Editor.updateSelection updatedRect)
+                    , Cmd.none
+                    )
 
                 _ ->
                     ( model, Cmd.none )
 
         StopSelecting ->
-            ( { model | mode = Hovering }, Cmd.none )
+            ( { model | mode = Hovering }
+            , Cmd.none
+            )
 
         ZoomMove x y delta ->
             let
@@ -172,23 +193,17 @@ update msg model =
             , Cmd.none
             )
 
-        StartDrawing x y ->
+        StartDrawing screenX screenY ->
             let
                 ( updatedEditor, nextId ) =
-                    Editor.addNewDrawingWidget model.latestId
-                        (Point.scale (1 / model.editor.zoomFactor) (Point.minus model.editor.panOffset { x = x, y = y }))
-                        model.editor
+                    Editor.addNewDrawingWidget model.latestId { x = screenX, y = screenY } model.editor
             in
             ( { model | editor = updatedEditor, latestId = nextId, mode = Drawing model.latestId }, Cmd.none )
 
         DrawingMove x y ->
             case model.mode of
                 Drawing widgetId ->
-                    ( updateEditor
-                        (Editor.updateWidget widgetId
-                            (Widget.pushPointToDrawing (Point.scale (1 / model.editor.zoomFactor) (Point.minus model.editor.panOffset { x = x, y = y })))
-                        )
-                        model
+                    ( updateEditor (Editor.updateWidget widgetId (Widget.pushWorldPointToDrawing (Editor.screenToWorld model.editor { x = x, y = y }))) model
                     , Cmd.none
                     )
 
@@ -277,7 +292,7 @@ globalEvents model =
             , preventDefaultOn "mousemove" (Decode.map alwaysPreventDefault deltaDecoder)
             ]
 
-        Selecting _ _ ->
+        Selecting _ ->
             let
                 selectionDecoder =
                     Decode.map2 SelectionMove
@@ -321,6 +336,7 @@ viewPage model =
         , viewEditor model
         , viewToolbar model
         , viewSelection model.mode
+        , Selection.view model.editor.selection
         ]
 
 
@@ -360,7 +376,15 @@ viewEditor model =
          ]
             ++ viewPanOffsetAndZoomStyle model
         )
-        (List.map Widget.view model.editor.widgets)
+        (List.map
+            (\widget ->
+                Widget.view
+                    { widget = widget
+                    , isSelected = List.member widget.id model.editor.selection.widgetsIds
+                    }
+            )
+            model.editor.widgets
+        )
 
 
 viewBlueprintPattern : Editor -> Html Msg
@@ -402,31 +426,17 @@ viewBlueprintPattern editor =
 viewSelection : Mode -> Html Msg
 viewSelection mode =
     case mode of
-        Selecting start end ->
-            let
-                ( top, height ) =
-                    if end.y > start.y then
-                        ( start.y, end.y - start.y )
-
-                    else
-                        ( end.y, start.y - end.y )
-
-                ( left, width ) =
-                    if end.x > start.x then
-                        ( start.x, end.x - start.x )
-
-                    else
-                        ( end.x, start.x - end.x )
-
-                position =
-                    [ style "top" (String.fromFloat top ++ "px")
-                    , style "left" (String.fromFloat left ++ "px")
-                    , style "width" (String.fromFloat width ++ "px")
-                    , style "height" (String.fromFloat height ++ "px")
-                    ]
-            in
+        Selecting rect ->
             div [ class "absolute top-0 left-0 w-screen h-screen overflow-hidden pointer-events-none" ]
-                [ div ([ class "absolute border border-blue-400 bg-blue-200" ] ++ position) []
+                [ div
+                    [ class "absolute border border-blue-400"
+                    , style "background" "rgba(3, 165, 252, 0.3)"
+                    , style "top" (String.fromFloat rect.y1 ++ "px")
+                    , style "left" (String.fromFloat rect.x1 ++ "px")
+                    , style "width" (String.fromFloat (Rect.width rect) ++ "px")
+                    , style "height" (String.fromFloat (Rect.height rect) ++ "px")
+                    ]
+                    []
                 ]
 
         _ ->
@@ -456,7 +466,7 @@ viewCursorStyle model =
                 Panning ->
                     style "cursor" "grabbing"
 
-                Selecting _ _ ->
+                Selecting _ ->
                     style "cursor" "default"
 
                 Drawing _ ->
