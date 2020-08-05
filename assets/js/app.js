@@ -6,12 +6,7 @@ import "../css/app.css"
 import Alpine from 'alpinejs'
 Alpine.start()
 
-import {Elm} from '../elm/Main.elm'
-
-document.addEventListener('contextmenu', ev => {
-  ev.preventDefault();
-  return false;
-});
+import { Elm } from '../elm/Main.elm'
 
 window.addEventListener('load', () => {
   let editor = document.querySelector('#editor')
@@ -29,3 +24,9 @@ window.addEventListener('load', () => {
     });
   }
 })
+
+document.addEventListener('contextmenu', ev => {
+  ev.preventDefault();
+  return false;
+});
+

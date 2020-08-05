@@ -150,7 +150,6 @@ update msg model =
 
                         updatedRect =
                             { rect | x2 = worldPoint.x, y2 = worldPoint.y }
-                                |> Rect.normalizeTopLeft
                     in
                     ( { model | mode = Selecting updatedRect }
                         |> updateEditor (Editor.updateSelection updatedRect)
@@ -335,8 +334,6 @@ viewPage model =
         [ viewBlueprintPattern model.editor
         , viewEditor model
         , viewToolbar model
-        , viewSelection model.mode
-        , Selection.view model.editor.selection
         ]
 
 
@@ -376,14 +373,15 @@ viewEditor model =
          ]
             ++ viewPanOffsetAndZoomStyle model
         )
-        (List.map
-            (\widget ->
-                Widget.view
-                    { widget = widget
-                    , isSelected = List.member widget.id model.editor.selection.widgetsIds
-                    }
-            )
-            model.editor.widgets
+        ([ viewSelection model.mode, Selection.view model.editor.selection ]
+            ++ List.map
+                (\widget ->
+                    Widget.view
+                        { widget = widget
+                        , isSelected = List.member widget.id model.editor.selection.widgetsIds
+                        }
+                )
+                model.editor.widgets
         )
 
 
@@ -427,17 +425,15 @@ viewSelection : Mode -> Html Msg
 viewSelection mode =
     case mode of
         Selecting rect ->
-            div [ class "absolute top-0 left-0 w-screen h-screen overflow-hidden pointer-events-none" ]
-                [ div
-                    [ class "absolute border border-blue-400"
-                    , style "background" "rgba(3, 165, 252, 0.3)"
-                    , style "top" (String.fromFloat rect.y1 ++ "px")
-                    , style "left" (String.fromFloat rect.x1 ++ "px")
-                    , style "width" (String.fromFloat (Rect.width rect) ++ "px")
-                    , style "height" (String.fromFloat (Rect.height rect) ++ "px")
-                    ]
-                    []
+            div
+                [ class "absolute border border-blue-400 pointer-events-none"
+                , style "background" "rgba(3, 165, 252, 0.3)"
+                , style "top" (String.fromFloat (Rect.top rect) ++ "px")
+                , style "left" (String.fromFloat (Rect.left rect) ++ "px")
+                , style "width" (String.fromFloat (Rect.width rect) ++ "px")
+                , style "height" (String.fromFloat (Rect.height rect) ++ "px")
                 ]
+                []
 
         _ ->
             text ""

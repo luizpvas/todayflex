@@ -137,7 +137,7 @@
 
       <span><%= gettext "or" %></span>
 
-      <a href="#" class="bg-green-600 text-green-100 font-bold py-1 px-4 border-b-2 border-green-900 rounded-full flex items-center space-x-1">
+      <a href="<%= Routes.project_path(@conn, :show, 1) %>" class="bg-green-600 text-green-100 font-bold py-1 px-4 border-b-2 border-green-900 rounded-full flex items-center space-x-1">
         <svg class="w-5" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
         <span><%= gettext "See it for yourself" %></span>
       </a>
@@ -151,7 +151,7 @@
       </div>
 
       <div>
-        &mdash; made with ♥  by <a href="https://twitter.com/luizpvasc" class="text-blue-600 hover:underline">Luiz Paulo</a>
+        &mdash; <%= gettext "made with ♥  by" %> <a href="https://twitter.com/luizpvasc" class="text-blue-600 hover:underline">luizpvas</a>
       </div>
     </div>
   </div>
