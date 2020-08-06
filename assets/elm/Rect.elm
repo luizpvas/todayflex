@@ -1,4 +1,6 @@
-module Rect exposing (Rect, height, intersects, left, top, width, zero)
+module Rect exposing (Rect, height, intersects, isZero, left, scale, shift, top, width, zero)
+
+import Point exposing (Point)
 
 
 type alias Rect =
@@ -9,9 +11,36 @@ type alias Rect =
     }
 
 
+
+-- INIT
+
+
 zero : Rect
 zero =
     { x1 = 0, y1 = 0, x2 = 0, y2 = 0 }
+
+
+
+-- UPDATE
+
+
+shift : Point -> Rect -> Rect
+shift { x, y } rect =
+    { x1 = rect.x1 + x, x2 = rect.x2 + x, y1 = rect.y1 + y, y2 = rect.y2 + y }
+
+
+scale : Float -> Rect -> Rect
+scale f rect =
+    { x1 = rect.x1 * f, x2 = rect.x2 * f, y1 = rect.y1 * f, y2 = rect.y2 * f }
+
+
+
+-- HELPERS
+
+
+isZero : Rect -> Bool
+isZero rect =
+    rect.x1 == 0 && rect.x2 == 0 && rect.y1 == 0 && rect.y2 == 0
 
 
 intersects : Rect -> Rect -> Bool

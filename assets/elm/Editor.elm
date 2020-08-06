@@ -3,21 +3,20 @@ module Editor exposing
     , addNewDrawingWidget
     , clearSelection
     , init
-    , screenToWorld
     , update
     , updateSelection
     , updateWidget
+    , updateWorld
     )
 
 import Point exposing (Point)
-import Rect exposing (Rect)
 import Selection exposing (Selection)
 import Widget exposing (Widget, WidgetId)
+import World exposing (World)
 
 
 type alias Editor =
-    { panOffset : Point
-    , zoomFactor : Float
+    { world : World
     , widgets : List Widget
     , selection : Selection
     }
@@ -25,17 +24,10 @@ type alias Editor =
 
 init : Editor
 init =
-    { panOffset = { x = 0, y = 0 }
-    , zoomFactor = 1.0
+    { world = World.init
     , widgets = []
     , selection = Selection.init
     }
-
-
-screenToWorld : Editor -> Point -> Point
-screenToWorld editor point =
-    Point.minus editor.panOffset point
-        |> Point.scale (1 / editor.zoomFactor)
 
 
 update : (Editor -> Editor) -> Editor -> Editor
@@ -43,21 +35,26 @@ update fn editor =
     fn editor
 
 
+updateWorld : (World -> World) -> Editor -> Editor
+updateWorld fn editor =
+    { editor | world = fn editor.world }
+
+
 clearSelection : Editor -> Editor
 clearSelection editor =
     { editor | selection = Selection.init }
 
 
-updateSelection : Rect -> Editor -> Editor
-updateSelection selectionRect editor =
-    { editor | selection = Selection.calculateSelection selectionRect editor.widgets }
+updateSelection : (List Widget -> Selection -> Selection) -> Editor -> Editor
+updateSelection fn editor =
+    { editor | selection = fn editor.widgets editor.selection }
 
 
 addNewDrawingWidget : Int -> Point -> Editor -> ( Editor, Int )
 addNewDrawingWidget latestId screenPoint editor =
     let
         worldPoint =
-            screenToWorld editor screenPoint
+            World.pointScreenToWorld editor.world screenPoint
 
         updatedWidgets =
             editor.widgets

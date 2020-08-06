@@ -16,6 +16,7 @@ import Selection
 import Task
 import Tool exposing (Tool)
 import Widget exposing (Widget, WidgetId)
+import World exposing (World)
 
 
 
@@ -115,18 +116,11 @@ update msg model =
             ( { model | mode = Panning }, Cmd.none )
 
         ApplyPanningDelta x y ->
-            ( updateEditor
-                (\editor ->
-                    { editor
-                        | panOffset =
-                            { x = editor.panOffset.x + x
-                            , y = editor.panOffset.y + y
-                            }
-                    }
-                )
-                model
-            , Cmd.none
-            )
+            let
+                updatedPan =
+                    { x = model.editor.world.pan.x + x, y = model.editor.world.pan.y + y }
+            in
+            ( updateEditor (Editor.updateWorld (World.updatePan updatedPan)) model, Cmd.none )
 
         StopPanning ->
             ( { model | mode = Hovering }, Cmd.none )
@@ -134,7 +128,7 @@ update msg model =
         StartSelecting screenX screenY ->
             let
                 worldPoint =
-                    Editor.screenToWorld model.editor { x = screenX, y = screenY }
+                    World.pointScreenToWorld model.editor.world { x = screenX, y = screenY }
             in
             ( { model | mode = Selecting { x1 = worldPoint.x, y1 = worldPoint.y, x2 = worldPoint.x, y2 = worldPoint.y } }
                 |> updateEditor Editor.clearSelection
@@ -146,13 +140,13 @@ update msg model =
                 Selecting rect ->
                     let
                         worldPoint =
-                            Editor.screenToWorld model.editor { x = screenX, y = screenY }
+                            World.pointScreenToWorld model.editor.world { x = screenX, y = screenY }
 
                         updatedRect =
                             { rect | x2 = worldPoint.x, y2 = worldPoint.y }
                     in
                     ( { model | mode = Selecting updatedRect }
-                        |> updateEditor (Editor.updateSelection updatedRect)
+                        |> updateEditor (Editor.updateSelection (Selection.calculateSelection updatedRect))
                     , Cmd.none
                     )
 
@@ -161,6 +155,7 @@ update msg model =
 
         StopSelecting ->
             ( { model | mode = Hovering }
+                |> updateEditor (Editor.updateSelection Selection.clearActiveSelection)
             , Cmd.none
             )
 
@@ -170,27 +165,23 @@ update msg model =
                     delta / zoomSmoothFactor
 
                 updatedZoomFactor =
-                    model.editor.zoomFactor + smoothedDelta
+                    model.editor.world.zoom + smoothedDelta
 
                 correctedX =
-                    x - model.editor.panOffset.x
+                    x - model.editor.world.pan.x
 
                 correctedY =
-                    y - model.editor.panOffset.y
-            in
-            ( updateEditor
-                (\editor ->
-                    { editor
-                        | zoomFactor = Basics.min (Basics.max minZoomFactor updatedZoomFactor) maxZoomFactor
-                        , panOffset =
-                            { x = editor.panOffset.x - (correctedX * smoothedDelta * 1 / editor.zoomFactor)
-                            , y = editor.panOffset.y - (correctedY * smoothedDelta * 1 / editor.zoomFactor)
-                            }
+                    y - model.editor.world.pan.y
+
+                updatedPan =
+                    { x = model.editor.world.pan.x - (correctedX * smoothedDelta * 1 / model.editor.world.zoom)
+                    , y = model.editor.world.pan.y - (correctedY * smoothedDelta * 1 / model.editor.world.zoom)
                     }
-                )
-                model
-            , Cmd.none
-            )
+
+                updatedZoom =
+                    Basics.min (Basics.max minZoomFactor updatedZoomFactor) maxZoomFactor
+            in
+            ( updateEditor (Editor.updateWorld (World.updatePan updatedPan >> World.updateZoom updatedZoom)) model, Cmd.none )
 
         StartDrawing screenX screenY ->
             let
@@ -202,7 +193,7 @@ update msg model =
         DrawingMove x y ->
             case model.mode of
                 Drawing widgetId ->
-                    ( updateEditor (Editor.updateWidget widgetId (Widget.pushWorldPointToDrawing (Editor.screenToWorld model.editor { x = x, y = y }))) model
+                    ( updateEditor (Editor.updateWidget widgetId (Widget.pushWorldPointToDrawing (World.pointScreenToWorld model.editor.world { x = x, y = y }))) model
                     , Cmd.none
                     )
 
@@ -333,6 +324,7 @@ viewPage model =
     div []
         [ viewBlueprintPattern model.editor
         , viewEditor model
+        , Selection.view model.editor.world model.editor.selection
         , viewToolbar model
         ]
 
@@ -369,19 +361,17 @@ viewToolbarButton selectedTool tool icon =
 viewEditor : Model -> Html Msg
 viewEditor model =
     div
-        ([ class "relative w-4 h-4 overflow-visible"
-         ]
+        ([ class "relative w-4 h-4 overflow-visible" ]
             ++ viewPanOffsetAndZoomStyle model
         )
-        ([ viewSelection model.mode, Selection.view model.editor.selection ]
-            ++ List.map
-                (\widget ->
-                    Widget.view
-                        { widget = widget
-                        , isSelected = List.member widget.id model.editor.selection.widgetsIds
-                        }
-                )
-                model.editor.widgets
+        (List.map
+            (\widget ->
+                Widget.view
+                    { widget = widget
+                    , isSelected = List.member widget.id model.editor.selection.widgetsIds
+                    }
+            )
+            model.editor.widgets
         )
 
 
@@ -389,30 +379,30 @@ viewBlueprintPattern : Editor -> Html Msg
 viewBlueprintPattern editor =
     let
         backgroundPosition1 =
-            String.fromFloat (-2 + editor.panOffset.x)
+            String.fromFloat (-2 + editor.world.pan.x)
                 ++ "px "
-                ++ String.fromFloat (-2 + editor.panOffset.y)
+                ++ String.fromFloat (-2 + editor.world.pan.y)
                 ++ "px"
 
         backgroundPosition2 =
-            String.fromFloat (-1 + editor.panOffset.x)
+            String.fromFloat (-1 + editor.world.pan.x)
                 ++ "px "
-                ++ String.fromFloat (-1 + editor.panOffset.y)
+                ++ String.fromFloat (-1 + editor.world.pan.y)
                 ++ "px"
 
         backgroundPosition =
             style "background-position" (backgroundPosition1 ++ ", " ++ backgroundPosition1 ++ ", " ++ backgroundPosition2 ++ ", " ++ backgroundPosition2)
 
         backgroundSize1 =
-            String.fromFloat (100 * editor.zoomFactor)
+            String.fromFloat (100 * editor.world.zoom)
                 ++ "px "
-                ++ String.fromFloat (100 * editor.zoomFactor)
+                ++ String.fromFloat (100 * editor.world.zoom)
                 ++ "px"
 
         backgroundSize2 =
-            String.fromFloat (20 * editor.zoomFactor)
+            String.fromFloat (20 * editor.world.zoom)
                 ++ "px "
-                ++ String.fromFloat (20 * editor.zoomFactor)
+                ++ String.fromFloat (20 * editor.world.zoom)
                 ++ "px"
 
         backgroundSize =
@@ -421,32 +411,14 @@ viewBlueprintPattern editor =
     div [ class "absolute top-0 left-0 w-screen h-screen blueprint-pattern", backgroundPosition, backgroundSize ] []
 
 
-viewSelection : Mode -> Html Msg
-viewSelection mode =
-    case mode of
-        Selecting rect ->
-            div
-                [ class "absolute border border-blue-400 pointer-events-none"
-                , style "background" "rgba(3, 165, 252, 0.3)"
-                , style "top" (String.fromFloat (Rect.top rect) ++ "px")
-                , style "left" (String.fromFloat (Rect.left rect) ++ "px")
-                , style "width" (String.fromFloat (Rect.width rect) ++ "px")
-                , style "height" (String.fromFloat (Rect.height rect) ++ "px")
-                ]
-                []
-
-        _ ->
-            text ""
-
-
 viewPanOffsetAndZoomStyle : Model -> List (Attribute msg)
 viewPanOffsetAndZoomStyle model =
     let
         translate =
-            "translate(" ++ String.fromFloat model.editor.panOffset.x ++ "px, " ++ String.fromFloat model.editor.panOffset.y ++ "px)"
+            "translate(" ++ String.fromFloat model.editor.world.pan.x ++ "px, " ++ String.fromFloat model.editor.world.pan.y ++ "px)"
 
         scale =
-            "scale(" ++ String.fromFloat model.editor.zoomFactor ++ ")"
+            "scale(" ++ String.fromFloat model.editor.world.zoom ++ ")"
     in
     [ style "transform" (translate ++ " " ++ scale), style "transform-origin" "0px 0px" ]
 
