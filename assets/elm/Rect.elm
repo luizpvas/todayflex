@@ -1,4 +1,16 @@
-module Rect exposing (Rect, height, intersects, isZero, left, scale, shift, top, width, zero)
+module Rect exposing
+    ( Rect
+    , addMargin
+    , height
+    , intersects
+    , isZero
+    , left
+    , scale
+    , shift
+    , top
+    , width
+    , zero
+    )
 
 import Point exposing (Point)
 
@@ -27,6 +39,21 @@ zero =
 shift : Point -> Rect -> Rect
 shift { x, y } rect =
     { x1 = rect.x1 + x, x2 = rect.x2 + x, y1 = rect.y1 + y, y2 = rect.y2 + y }
+
+
+{-| Adds a margin of `val` around the rect, making it `val` units bigger in all directions.
+-}
+addMargin : Float -> Rect -> Rect
+addMargin val rect =
+    let
+        normalized =
+            normalizeTopLeft rect
+    in
+    { x1 = normalized.x1 - val
+    , x2 = normalized.x2 + val
+    , y1 = normalized.y1 - val
+    , y2 = normalized.y2 + val
+    }
 
 
 scale : Float -> Rect -> Rect

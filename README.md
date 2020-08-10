@@ -1,3 +1,11 @@
+# My next big goal
+
+* Single item click selection
+* Shift click to unselect a new widget
+* Ctrl click to select a new widget
+
+* Scale widgets
+
 # Todayflex is last organization app you'll ever need.
 
 All productitivies app are subjective.

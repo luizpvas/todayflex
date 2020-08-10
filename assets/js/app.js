@@ -26,7 +26,7 @@ window.addEventListener('load', () => {
 })
 
 document.addEventListener('contextmenu', ev => {
-  ev.preventDefault();
+  // ev.preventDefault();
   return false;
 });
 

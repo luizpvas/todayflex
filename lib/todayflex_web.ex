@@ -24,6 +24,8 @@ defmodule TodayflexWeb do
       import Plug.Conn
       import TodayflexWeb.Gettext
       alias TodayflexWeb.Router.Helpers, as: Routes
+
+      action_fallback TodayflexWeb.FallbackController
     end
   end
 

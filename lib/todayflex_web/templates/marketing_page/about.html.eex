@@ -1,10 +1,7 @@
 <div class="min-h-screen blueprint-pattern">
-  <div class="max-w-screen-sm mx-auto pt-4">
-    <%= link to: Routes.marketing_page_path(@conn, :index), class: "flex items-center space-x-1 text-gray-700 hover:underline hover:text-gray-900" do %>
-      <svg class="w-4" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-      <span><%= gettext("Back") %></span>
-    <% end %>
+  <%= render "_menu.html", conn: @conn %>
 
+  <div class="max-w-screen-sm mx-auto">
     <div class="mt-2 bg-white p-4 rounded shadow">
       <div class="prose">
         <h1>About Todayflex</h1>
@@ -63,4 +60,6 @@
       </div><!-- prose -->
     </div><!-- bg-white -->
   </div><!-- max-w-screen-sm -->
+
+  <%= render "_footer.html", conn: @conn %>
 </div><!-- blueprint-pattern -->

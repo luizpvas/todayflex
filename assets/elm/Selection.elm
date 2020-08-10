@@ -1,7 +1,17 @@
-module Selection exposing (Selection, calculateSelection, clearActiveSelection, init, view)
+module Selection exposing
+    ( Selection
+    , calculateSelection
+    , clearActiveSelection
+    , init
+    , recalculateWidgetsArea
+    , view
+    )
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (..)
+import HtmlEvents
+import Json.Decode as Decode
 import Rect exposing (Rect)
 import Widget exposing (Widget, WidgetId)
 import World exposing (World)
@@ -56,16 +66,40 @@ calculateSelection selectionRect allWidgets _ =
     }
 
 
-view : World -> Selection -> Html msg
-view world selection =
+recalculateWidgetsArea : List Widget -> Selection -> Selection
+recalculateWidgetsArea allWidgets selection =
+    let
+        selectedWidgets =
+            List.filter (\widget -> List.member widget.id selection.widgetsIds) allWidgets
+    in
+    { selection
+        | selectedWidgetsArea =
+            Just <|
+                { x1 = selectedWidgets |> List.map .rect |> List.map .x1 |> List.minimum |> Maybe.withDefault 0
+                , y1 = selectedWidgets |> List.map .rect |> List.map .y1 |> List.minimum |> Maybe.withDefault 0
+                , x2 = selectedWidgets |> List.map .rect |> List.map .x2 |> List.maximum |> Maybe.withDefault 0
+                , y2 = selectedWidgets |> List.map .rect |> List.map .y2 |> List.maximum |> Maybe.withDefault 0
+                }
+    }
+
+
+type alias Config msg =
+    { world : World
+    , selection : Selection
+    , onStartMoving : msg
+    }
+
+
+view : Config msg -> Html msg
+view config =
     div []
-        [ viewActiveSelectionArea world selection
-        , viewSelectedWidgetsArea world selection
+        [ viewActiveSelectionArea config
+        , viewSelectedWidgetsArea config
         ]
 
 
-viewActiveSelectionArea : World -> Selection -> Html msg
-viewActiveSelectionArea world selection =
+viewActiveSelectionArea : Config msg -> Html msg
+viewActiveSelectionArea { world, selection } =
     case selection.activeSelectionArea of
         Nothing ->
             text ""
@@ -86,8 +120,8 @@ viewActiveSelectionArea world selection =
                 []
 
 
-viewSelectedWidgetsArea : World -> Selection -> Html msg
-viewSelectedWidgetsArea world selection =
+viewSelectedWidgetsArea : Config msg -> Html msg
+viewSelectedWidgetsArea { world, selection, onStartMoving } =
     case selection.selectedWidgetsArea of
         Nothing ->
             text ""
@@ -108,9 +142,15 @@ viewSelectedWidgetsArea world selection =
                     , style "left" (String.fromFloat (Rect.left screenRect) ++ "px")
                     , style "width" (String.fromFloat (Rect.width screenRect) ++ "px")
                     , style "height" (String.fromFloat (Rect.height screenRect) ++ "px")
+                    , HtmlEvents.preventDefaultStopPropagation "mousedown" (Decode.succeed onStartMoving)
                     ]
                     [ div [ class "absolute w-2 h-2 top-0 left-0 -mt-1 -ml-1 bg-blue-400" ] []
                     , div [ class "absolute w-2 h-2 top-0 right-0 -mt-1 -mr-1 bg-blue-400" ] []
                     , div [ class "absolute w-2 h-2 bottom-0 left-0 -mb-1 -ml-1 bg-blue-400" ] []
                     , div [ class "absolute w-2 h-2 bottom-0 right-0 -mb-1 -mr-1 bg-blue-400" ] []
                     ]
+
+
+alwaysPreventDefault : msg -> ( msg, Bool )
+alwaysPreventDefault msg =
+    ( msg, True )

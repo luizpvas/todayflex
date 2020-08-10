@@ -2,19 +2,19 @@ module Main exposing (main)
 
 import Browser
 import Browser.Dom
+import Colorpicker exposing (Colorpicker)
 import Editor exposing (Editor)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Icon
 import Json.Decode as Decode exposing (Decoder)
-import Lang
 import Point exposing (Point)
 import Ports
 import Rect exposing (Rect)
 import Selection
 import Task
 import Tool exposing (Tool)
+import Toolbar
 import Widget exposing (Widget, WidgetId)
 import World exposing (World)
 
@@ -47,6 +47,7 @@ type Mode
     | Panning
     | Selecting Rect
     | Drawing WidgetId
+    | MovingSelection
 
 
 type alias Model =
@@ -55,6 +56,7 @@ type alias Model =
     , editor : Editor
     , screen : Point
     , selectedTool : Tool
+    , selectedColor : String
     }
 
 
@@ -70,6 +72,7 @@ init flags =
       , editor = Editor.init
       , screen = { x = 0, y = 0 }
       , selectedTool = Tool.Move
+      , selectedColor = "#2D3748"
       }
     , Task.perform GotViewport Browser.Dom.getViewport
     )
@@ -80,7 +83,8 @@ init flags =
 
 
 type Msg
-    = GotViewport Browser.Dom.Viewport
+    = NoOp
+    | GotViewport Browser.Dom.Viewport
     | ShortcutPressed String
     | SelectTool Tool
     | StartPanning
@@ -89,28 +93,40 @@ type Msg
     | StartSelecting Float Float
     | SelectionMove Float Float
     | StopSelecting
+    | StartMovingSelection
+    | ApplyMovingSelectionDelta Float Float
+    | StopMovingSelection
     | ZoomMove Float Float Float
     | StartDrawing Float Float
     | DrawingMove Float Float
     | StopDrawing
+    | ColorpickerHueSelected Colorpicker.Hex
+    | ColorpickerBrightnessSelected Colorpicker.Hex
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        NoOp ->
+            let
+                _ =
+                    Debug.log "no opped..."
+            in
+            ( model, Cmd.none )
+
         GotViewport viewport ->
             ( { model | screen = { x = viewport.scene.width, y = viewport.scene.height } }, Cmd.none )
 
         ShortcutPressed key ->
-            case Tool.toolFromShortcut key of
+            case Tool.toolFromShortcut key model.selectedTool of
                 Nothing ->
                     ( model, Cmd.none )
 
                 Just tool ->
-                    ( { model | selectedTool = tool }, Cmd.none )
+                    updateSelectedTool tool model
 
         SelectTool tool ->
-            ( { model | selectedTool = tool }, Cmd.none )
+            updateSelectedTool tool model
 
         StartPanning ->
             ( { model | mode = Panning }, Cmd.none )
@@ -159,6 +175,24 @@ update msg model =
             , Cmd.none
             )
 
+        StartMovingSelection ->
+            ( { model | mode = MovingSelection }, Cmd.none )
+
+        ApplyMovingSelectionDelta x y ->
+            let
+                delta =
+                    { x = x, y = y }
+                        |> Point.scale (1 / model.editor.world.zoom)
+            in
+            ( model
+                |> updateEditor (Editor.updateWidgets model.editor.selection.widgetsIds (Widget.updateRect (Rect.shift delta)))
+                |> updateEditor (Editor.updateSelection Selection.recalculateWidgetsArea)
+            , Cmd.none
+            )
+
+        StopMovingSelection ->
+            ( { model | mode = Hovering }, Cmd.none )
+
         ZoomMove x y delta ->
             let
                 smoothedDelta =
@@ -186,7 +220,7 @@ update msg model =
         StartDrawing screenX screenY ->
             let
                 ( updatedEditor, nextId ) =
-                    Editor.addNewDrawingWidget model.latestId { x = screenX, y = screenY } model.editor
+                    Editor.addNewDrawingWidget model.latestId model.selectedColor { x = screenX, y = screenY } model.editor
             in
             ( { model | editor = updatedEditor, latestId = nextId, mode = Drawing model.latestId }, Cmd.none )
 
@@ -201,7 +235,48 @@ update msg model =
                     ( model, Cmd.none )
 
         StopDrawing ->
-            ( { model | mode = Hovering }, Cmd.none )
+            case model.mode of
+                Drawing widgetId ->
+                    ( { model | mode = Hovering }
+                        |> updateEditor (Editor.updateWidget widgetId Widget.commit)
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( { model | mode = Hovering }, Cmd.none )
+
+        ColorpickerHueSelected hue ->
+            case model.selectedTool of
+                Tool.Colorpicker previousTool _ ->
+                    ( { model | selectedTool = Tool.Colorpicker previousTool (Colorpicker.PickingBrightness hue) }
+                    , Task.attempt (\_ -> NoOp) (Browser.Dom.focus "colorpicker-brightness")
+                    )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        ColorpickerBrightnessSelected hex ->
+            case model.selectedTool of
+                Tool.Colorpicker previousTool _ ->
+                    ( { model | selectedTool = previousTool, selectedColor = hex }, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
+
+
+updateSelectedTool : Tool -> Model -> ( Model, Cmd Msg )
+updateSelectedTool tool model =
+    ( { model | selectedTool = tool }
+    , case tool of
+        Tool.Move ->
+            Cmd.none
+
+        Tool.Pencil ->
+            Cmd.none
+
+        Tool.Colorpicker _ _ ->
+            Task.attempt (\_ -> NoOp) (Browser.Dom.focus "colorpicker-hue")
+    )
 
 
 updateEditor : (Editor -> Editor) -> Model -> Model
@@ -245,6 +320,9 @@ globalEvents model =
                                                 Decode.map2 StartDrawing
                                                     (Decode.field "pageX" Decode.float)
                                                     (Decode.field "pageY" Decode.float)
+
+                                            Tool.Colorpicker _ _ ->
+                                                Decode.fail "not needed"
 
                                     2 ->
                                         Decode.succeed StartPanning
@@ -304,6 +382,17 @@ globalEvents model =
             , preventDefaultOn "mouseup" (Decode.map alwaysPreventDefault (Decode.succeed StopDrawing))
             ]
 
+        MovingSelection ->
+            let
+                deltaDecoder =
+                    Decode.map2 ApplyMovingSelectionDelta
+                        (Decode.field "movementX" Decode.float)
+                        (Decode.field "movementY" Decode.float)
+            in
+            [ preventDefaultOn "mousemove" (Decode.map alwaysPreventDefault deltaDecoder)
+            , preventDefaultOn "mouseup" (Decode.map alwaysPreventDefault (Decode.succeed StopMovingSelection))
+            ]
+
 
 alwaysPreventDefault : msg -> ( msg, Bool )
 alwaysPreventDefault msg =
@@ -324,37 +413,18 @@ viewPage model =
     div []
         [ viewBlueprintPattern model.editor
         , viewEditor model
-        , Selection.view model.editor.world model.editor.selection
-        , viewToolbar model
-        ]
-
-
-viewToolbar : Model -> Html Msg
-viewToolbar model =
-    div [ class "absolute top-0 right-0 mt-2 mr-2 flex items-center" ]
-        [ div [ class "bg-gray-600 text-white py-2 pl-4 pr-12 rounded-full -mr-10 shadow-md" ]
-            [ text "Hello"
-            ]
-        , div [ class "bg-white rounded-full py-2 px-4 space-x-2 flex items-center shadow-md" ]
-            [ viewToolbarButton model.selectedTool Tool.Move (Icon.cursor "w-4")
-            , viewToolbarButton model.selectedTool Tool.Pencil (Icon.pencil "w-4")
-            ]
-        ]
-
-
-viewToolbarButton : Tool -> Tool -> Html Msg -> Html Msg
-viewToolbarButton selectedTool tool icon =
-    let
-        className =
-            if selectedTool == tool then
-                "flex items-center bg-blue-600 text-white rounded-md p-1"
-
-            else
-                "flex items-center hover:bg-gray-300 rounded-md p-1"
-    in
-    button [ class className, onClick (SelectTool tool) ]
-        [ icon
-        , span [ class "border text-xs leading-none p-px rounded" ] [ text (Tool.toolToShortcut tool) ]
+        , Selection.view
+            { world = model.editor.world
+            , selection = model.editor.selection
+            , onStartMoving = StartMovingSelection
+            }
+        , Toolbar.view
+            { selectedTool = model.selectedTool
+            , selectedColor = model.selectedColor
+            , onSelect = SelectTool
+            , hueSelected = ColorpickerHueSelected
+            , brightnessSelected = ColorpickerBrightnessSelected
+            }
         ]
 
 
@@ -440,18 +510,14 @@ viewCursorStyle model =
                 Drawing _ ->
                     style "cursor" "crosshair"
 
+                MovingSelection ->
+                    style "cursor" "move"
+
         Tool.Pencil ->
             style "cursor" "crosshair"
 
-
-viewLoading : Html Msg
-viewLoading =
-    div [ class "w-screen h-screen flex items-center justify-center" ]
-        [ div [ class "flex items-center" ]
-            [ div [ class "lds-ellipsis" ] [ div [] [], div [] [], div [] [], div [] [] ]
-            , text (Lang.t "Loading...")
-            ]
-        ]
+        Tool.Colorpicker _ _ ->
+            style "cursor" "default"
 
 
 

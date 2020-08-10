@@ -20,6 +20,8 @@ defmodule TodayflexWeb.Router do
     get "/",               MarketingPageController, :index
     get "/about",          MarketingPageController, :about
     get "/privacy_policy", MarketingPageController, :privacy_policy
+    get "/blog",           BlogController,          :index
+    get "/blog/:slug",     BlogController,          :show
 
     # Auth-protected pages
     get "/app",          AppController,           :index

@@ -1,0 +1,25 @@
+<div class="blueprint-pattern min-h-screen">
+  <%= render TodayflexWeb.MarketingPageView, "_menu.html", conn: @conn %>
+
+  <div class="max-w-screen-sm mx-auto">
+    <div class="mt-2 bg-white p-4 rounded shadow">
+      <div class="divide-y">
+        <%= for post <- @posts do %>
+          <%= link to: Routes.blog_path(@conn, :show, post[:slug]), class: "block w-full group p-2" do %>
+            <h2 class="font-bold text-lg group-hover:text-blue-600 group-hover:underline"><%= post[:title] %></h2>
+            <div>
+              <span><%= post[:author] %></span>
+              <span class="text-gray-700 text-sm"><%= post[:date] %></span>
+            </div>
+
+            <div class="mt-1 text-gray-800 group-hover:text-black">
+              <%= post[:preview] %>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <%= render TodayflexWeb.MarketingPageView, "_footer.html", conn: @conn %>
+</div>
