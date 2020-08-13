@@ -45,7 +45,9 @@ defmodule Todayflex.MixProject do
       {:gettext, "~> 0.11"},
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.0"},
-      {:earmark, "~> 1.4.10"}
+      {:earmark, "~> 1.4.10"},
+      {:comeonin, "~> 5.3.1"},
+      {:bcrypt_elixir, "~> 2.2.0"}
     ]
   end
 

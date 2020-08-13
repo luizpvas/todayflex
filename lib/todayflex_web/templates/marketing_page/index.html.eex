@@ -1,6 +1,6 @@
 <div class="w-screen h-screen flex items-center justify-center blueprint-pattern">
   <div class="-mt-12 flex flex-col items-center space-y-6">
-    <div style="width: 350px;">
+    <div style="width: 500px;">
       <img src="<%= Routes.static_path(@conn, "/images/logo.svg")  %>" class="w-full" />
     </div>
 
@@ -127,17 +127,17 @@
     </div>
 
     <div class="flex items-center space-x-2">
-      <a href="" class="bg-indigo-600 text-indigo-100 font-bold py-1 px-4 border-b-2 border-indigo-900">
+      <%= link to: Routes.auth_login_path(@conn, :new), class: "bg-indigo-600 text-indigo-100 text-lg font-bold py-1 px-4 border-b-2 border-indigo-900" do %>
         <%= gettext "Login" %>
-      </a>
+      <% end %>
 
-      <a href="" class="bg-purple-600 text-purple-100 font-bold py-1 px-4 border-b-2 border-purple-900">
+      <a href="" class="bg-purple-600 text-purple-100 text-lg font-bold py-1 px-4 border-b-2 border-purple-900">
         <%= gettext "Register" %>
       </a>
 
       <span><%= gettext "or" %></span>
 
-      <a href="<%= Routes.project_path(@conn, :show, 1) %>" class="bg-green-600 text-green-100 font-bold py-1 px-4 border-b-2 border-green-900 rounded-full flex items-center space-x-1">
+      <a href="<%= Routes.project_path(@conn, :show, 1) %>" class="bg-green-600 text-green-100 text-lg font-bold py-1 px-4 border-b-2 border-green-900 rounded-full flex items-center space-x-1">
         <svg class="w-5" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
         <span><%= gettext "See it for yourself" %></span>
       </a>

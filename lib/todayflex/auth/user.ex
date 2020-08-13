@@ -7,7 +7,7 @@ defmodule Todayflex.Auth.User do
     field :email
     timestamps()
 
-    many_to_many :projects, Todayflex.Auth.Project, join_through: "user_assocs" 
+    many_to_many :projects, Todayflex.Auth.Project, join_through: "user_assocs"
   end
 
   @doc false

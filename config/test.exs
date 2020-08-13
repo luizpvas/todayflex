@@ -20,3 +20,6 @@ config :todayflex, TodayflexWeb.Endpoint,
 
 # Print only warnings and errors during test
 config :logger, level: :warn
+
+# Performance boost for tests
+config :bcrypt_elixir, log_rounds: 4

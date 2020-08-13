@@ -9,6 +9,10 @@ defmodule TodayflexWeb.Router do
     plug :put_secure_browser_headers
   end
 
+  pipeline :authenticated do
+    plug TodayflexWeb.AuthenticatedPlug
+  end
+
   pipeline :api do
     plug :accepts, ["json"]
   end
@@ -16,16 +20,28 @@ defmodule TodayflexWeb.Router do
   scope "/", TodayflexWeb do
     pipe_through :browser
 
-    # Public pages
+    # Public/Marketing routes
     get "/",               MarketingPageController, :index
     get "/about",          MarketingPageController, :about
     get "/privacy_policy", MarketingPageController, :privacy_policy
     get "/blog",           BlogController,          :index
     get "/blog/:slug",     BlogController,          :show
 
-    # Auth-protected pages
-    get "/app",          AppController,           :index
-    get "/projects/:id", ProjectController,       :show
+    # Auth routes
+    scope "/auth", Auth, as: :auth do
+      get  "/login", LoginController, :new
+      post "/login", LoginController, :create
+    end
+
+    scope "/app" do
+      pipe_through :authenticated
+
+      get  "/projects",                         ProjectController,        :index
+      get  "/projects/:id",                     ProjectController,        :show
+      get  "/projects/:project_id/widgets",     Project.WidgetController, :index
+      post "/projects/:project_id/widgets",     Project.WidgetController, :create
+      put  "/projects/:project_id/widgets/:id", Project.WidgetController, :update
+    end
   end
 
   # Other scopes may use custom stacks.

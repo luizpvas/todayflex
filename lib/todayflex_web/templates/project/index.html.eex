@@ -1,0 +1,26 @@
+<div class="blueprint-pattern min-h-screen">
+  <div class="pt-10 max-w-screen-sm mx-auto">
+    <div class="bg-white p-4 rounded shadow">
+      <div class="flex items-center justify-between">
+        <h1 class="text-xl font-bold"><%= gettext "My projects" %></h1>
+
+        <div class="flex items-center space-x-2">
+          <%= f = form_for(@conn, Routes.project_path(@conn, :index), method: "get") %>
+            <%= search_input f, :query,
+                  class: "w-48 border py-1 px-2 rounded-md focus:outline-none focus:shadow-outline focus:border-blue-500",
+                  placeholder: gettext("Search...") %>
+          </form>
+
+          <%= button_link to: "#" do %>
+            <svg viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+            <span><%= gettext "New project" %></span>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="mt-4 bg-gray-100 p-4 rounded-md">
+        <%= gettext "Create your first project" %>
+      </div>
+    </div>
+  </div>
+</div>

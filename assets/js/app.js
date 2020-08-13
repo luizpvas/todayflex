@@ -6,6 +6,12 @@ import "../css/app.css"
 import Alpine from 'alpinejs'
 Alpine.start()
 
+import axios from 'axios'
+window.axios = axios
+
+import Turbolinks from 'turbolinks'
+Turbolinks.start()
+
 import { Elm } from '../elm/Main.elm'
 
 window.addEventListener('load', () => {

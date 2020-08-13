@@ -1,10 +1,10 @@
 <div class="max-w-screen-sm mx-auto py-2">
-  <div class="flex items-center space-x-2 justify-end">
-    <%= link to: Routes.marketing_page_path(@conn, :index), class: "font-bold" do %>
+  <div class="flex items-center space-x-4 justify-end">
+    <%= link to: Routes.marketing_page_path(@conn, :index), class: "font-bold underline" do %>
       <%= gettext "Home" %>
     <% end %>
 
-    <%= link to: Routes.blog_path(@conn, :index), class: "font-bold" do %>
+    <%= link to: Routes.blog_path(@conn, :index), class: "font-bold underline" do %>
       <%= gettext "Blog" %>
     <% end %>
 

@@ -10,9 +10,10 @@
 # We recommend using the bang functions (`insert!`, `update!`
 # and so on) as they will fail if something goes wrong.
 
-luiz = Todayflex.Repo.insert!(%Todayflex.Auth.User{
+{:ok, luiz} = Todayflex.Auth.register(%{
   name: "Luiz Paulo",
-  email: "luiz@todayflex.com"
+  email: "luiz@todayflex.com",
+  password: "1234"
 })
 
 aloweb = Todayflex.Repo.insert!(%Todayflex.Auth.Project{
@@ -21,4 +22,4 @@ aloweb = Todayflex.Repo.insert!(%Todayflex.Auth.Project{
   description: "Atendimento ao consumidor"
 })
 
-aloweb |> Todayflex.Repo.preload(:users) |> Ecto.Changeset.change() |> Ecto.Changeset.put_assoc(:users, [luiz]) |> Todayflex.Repo.update!()
+# aloweb |> Todayflex.Repo.preload(:users) |> Ecto.Changeset.change() |> Ecto.Changeset.put_assoc(:users, [luiz]) |> Todayflex.Repo.update!()

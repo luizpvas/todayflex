@@ -13,6 +13,12 @@
     <meta name="msapplication-TileColor" content="#666666">
     <meta name="theme-color" content="#ffffff">
 
+    <style>
+      html, body {
+        font-size: 14px;
+      }
+    </style>
+
     <title>Todayflex</title>
     <link rel="stylesheet" href="<%= Routes.static_path(@conn, "/css/app.css") %>"/>
     <script defer type="text/javascript" src="<%= Routes.static_path(@conn, "/js/app.js") %>"></script>

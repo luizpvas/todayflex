@@ -1,6 +1,6 @@
 <div class="max-w-screen-sm mx-auto py-6">
   <div class="flex justify-center">
-    <div class="flex items-center text-sm space-x-1 text-gray-800">
+    <div class="flex items-center space-x-1 text-gray-800">
       <div class="flex items-scenter space-x-1">
         <%= link gettext("About"), to: Routes.marketing_page_path(@conn, :about), class: "hover:underline" %>
         <span>&middot;</span>

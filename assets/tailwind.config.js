@@ -4,7 +4,11 @@ module.exports = {
     "../lib/todayflex_web/views/**/*.ex",
   ],
   theme: {
-    extend: {},
+    extend: {
+    },
+    fontFamily: {
+      'sans': ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Ubuntu', 'sans-serif']
+    }
   },
   variants: {
     textColor: ["responsive", "hover", "focus", "group-hover"],
